@@ -18,7 +18,7 @@ object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "0.1.0",
+        version = "0.1.1",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")
@@ -29,7 +29,7 @@ object JNudgeReply : KotlinPlugin(
         JNRCommand.register()
 
         globalEventChannel().subscribeAlways<NudgeEvent>(priority = JNRPluginConfig.priority) {
-            if (target.id == bot.id && JNRPluginConfig.replyMessage.isNotEmpty()) {
+            if (target.id == bot.id && JNRPluginConfig.replyMessage.isNotBlank()) {
                 subject.sendMessage(JNRPluginConfig.replyMessage.deserializeMiraiCode())
                 if (JNRPluginConfig.priority != EventPriority.MONITOR && JNRPluginConfig.isIntercept)
                     intercept()
