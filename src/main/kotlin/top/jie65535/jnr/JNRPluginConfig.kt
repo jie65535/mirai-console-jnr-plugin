@@ -1,12 +1,10 @@
-package me.jie65535.jnr
+package top.jie65535.jnr
 
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.message.data.Message
-import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.MessageChainBuilder
 
 /**
  * 插件配置
@@ -17,7 +15,7 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
      * @see Message
      */
     @ValueDescription("戳一戳回复的消息")
-    var replyMessage: String by value()
+    var replyMessageList: MutableList<ReplyMessage> by value()
 
     /**
      * 优先级 默认为高
