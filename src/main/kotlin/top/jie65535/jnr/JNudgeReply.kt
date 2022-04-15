@@ -31,11 +31,13 @@ object JNudgeReply : KotlinPlugin(
         Random.nextInt()
         globalEventChannel().subscribeAlways<NudgeEvent>(priority = JNRPluginConfig.priority) {
             if (target.id == bot.id && target.id != from.id && JNRPluginConfig.replyMessageList.isNotEmpty()) {
-                val replyList = if(subject is Group){
-                    JNRPluginConfig.replyMessageList
+                var replyList = JNRPluginConfig.replyMessageList
+                if(subject !is Group){
+                    replyList = replyList.filter { !it.message.startsWith("#group") }.toMutableList()
                 }else{
-                    // 非群聊时过滤部分特殊指令
-                    JNRPluginConfig.replyMessageList.filter { !it.message.startsWith("#group") }
+                    if((from as Member).permission.level >= (subject as Group).botPermission.level){
+                        replyList = replyList.filter { !it.message.startsWith("#group.mute") }.toMutableList()
+                    }
                 }
                 val totalWeight = replyList.sumOf { it.weight }
                 var w = Random.nextInt(totalWeight)
