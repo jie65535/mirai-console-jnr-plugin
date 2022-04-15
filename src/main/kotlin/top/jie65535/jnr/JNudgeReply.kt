@@ -30,7 +30,7 @@ object JNudgeReply : KotlinPlugin(
         JNRCommand.register()
         Random.nextInt()
         globalEventChannel().subscribeAlways<NudgeEvent>(priority = JNRPluginConfig.priority) {
-            if (target.id == bot.id && JNRPluginConfig.replyMessageList.isNotEmpty()) {
+            if (target.id == bot.id && target.id != from.id && JNRPluginConfig.replyMessageList.isNotEmpty()) {
                 val replyList = if(subject is Group){
                     JNRPluginConfig.replyMessageList
                 }else{
