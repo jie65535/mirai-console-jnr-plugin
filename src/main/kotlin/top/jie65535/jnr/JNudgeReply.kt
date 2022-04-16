@@ -65,7 +65,7 @@ object JNudgeReply : KotlinPlugin(
                 message.message == "#nudge" -> {
                     event.from.nudge().sendTo(event.subject)
                 }
-                message.message.matches(mutePattern) -> {
+                mutePattern.find(message.message) != null -> {
                     val duration = mutePattern.find(message.message)?.value?.toLong()!!
                     val member: Member = event.from as Member
                     try {
