@@ -7,8 +7,6 @@ import top.jie65535.jnr.JNudgeReply
 
 @OptIn(ConsoleExperimentalApi::class)
 suspend fun main(){
-    val s = "#group.mute:10"
-    println(s.matches(Regex("#group.mute:\\d+")))
     MiraiConsoleTerminalLoader.startAsDaemon()
     JNudgeReply.load()
     JNudgeReply.enable()

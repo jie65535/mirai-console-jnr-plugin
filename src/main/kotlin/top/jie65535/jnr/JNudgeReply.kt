@@ -59,13 +59,14 @@ object JNudgeReply : KotlinPlugin(
 
     @OptIn(ExperimentalCommandDescriptors::class, ConsoleExperimentalApi::class)
     suspend fun doReply(message: ReplyMessage, event: NudgeEvent) {
+        val mutePattern = Regex("(?<=#group.mute(\\\\)?:)\\d+")
         if(message.message.startsWith("#")) {
             when{
                 message.message == "#nudge" -> {
                     event.from.nudge().sendTo(event.subject)
                 }
-                message.message.matches(Regex("#group\\.mute(\\\\)?:\\d+")) -> {
-                    val (_, duration) = message.message.split(":")
+                message.message.matches(mutePattern) -> {
+                    val duration = mutePattern.find(message.message)?.value?.toLong()!!
                     val member: Member = event.from as Member
                     try {
                         member.mute(duration.toInt())
