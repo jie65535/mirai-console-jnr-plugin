@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "top.jie65535"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenLocal()
