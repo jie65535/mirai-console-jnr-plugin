@@ -18,6 +18,7 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 
 - `#nudge` 戳回去
 - `#group.mute:30` 禁言30s, 可以自定义禁言时间, 单位秒
+- `#ignore` 忽略
 
 ## 用例
 

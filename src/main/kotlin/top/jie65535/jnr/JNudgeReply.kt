@@ -16,7 +16,7 @@ object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "1.1.0",
+        version = "1.2.0",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")
@@ -25,7 +25,7 @@ object JNudgeReply : KotlinPlugin(
     override fun onEnable() {
         JNRPluginConfig.reload()
         JNRCommand.register()
-        Random.nextInt()
+
         globalEventChannel().subscribeAlways<NudgeEvent>(priority = JNRPluginConfig.priority) {
             if (target.id == bot.id && target.id != from.id && JNRPluginConfig.replyMessageList.isNotEmpty()) {
                 var replyList: List<ReplyMessage> = JNRPluginConfig.replyMessageList
@@ -57,9 +57,10 @@ object JNudgeReply : KotlinPlugin(
     private suspend fun doReply(message: ReplyMessage, event: NudgeEvent) {
         if (message.message.startsWith("#")) {
             when {
-                message.message == "#nudge" -> {
-                    event.from.nudge().sendTo(event.subject)
-                }
+                // 戳回去
+                message.message == "#nudge" -> event.from.nudge().sendTo(event.subject)
+
+                // 禁言
                 message.message.startsWith("#group.mute:") -> {
                     val duration = message.message.substringAfter(':').toIntOrNull()
                     if (duration == null) {
@@ -73,9 +74,12 @@ object JNudgeReply : KotlinPlugin(
                         }
                     }
                 }
-                else -> {
-                    event.subject.sendMessage(message.message.deserializeMiraiCode())
-                }
+
+                // 忽略
+                message.message == "#ignore" -> Unit
+
+                // 其它
+                else -> event.subject.sendMessage(message.message.deserializeMiraiCode())
             }
         } else {
             event.subject.sendMessage(message.message.deserializeMiraiCode())
