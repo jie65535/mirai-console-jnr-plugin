@@ -10,6 +10,7 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 /jnr clear    # 清空回复消息列表
 /jnr list    # 列出当前回复消息列表
 /jnr remove <index>    # 删除指定索引的回复消息
+/jnr reload  # 重载配置
 ```
 
 ## 特殊消息
@@ -19,6 +20,26 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 - `#nudge` 戳回去
 - `#group.mute:30` 禁言30s, 可以自定义禁言时间, 单位秒
 - `#ignore` 忽略
+
+## 配置文件
+
+文件位置：`config/me.jie65535.mirai-console-jnr-plugin/jnr.yml`
+
+```yaml
+# 戳一戳回复的消息
+replyMessageList: 
+  - message: 'Hello world'
+    weight: 1
+# 事件优先级 从高到低可选 HIGHEST, HIGH, NORMAL, LOW, LOWEST, MONITOR
+# 设置后需要重启插件生效
+priority: HIGH
+# 是否拦截事件 回复后可阻止其它插件响应戳一戳事件 优先级为MONITOR时拦截无效
+isIntercept: true
+# 群回复间隔（秒），0表示无限制
+groupInterval: 0
+# 用户私聊回复间隔（秒），0表示无限制
+userInterval: 0
+```
 
 ## 用例
 

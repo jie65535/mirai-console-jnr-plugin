@@ -14,6 +14,7 @@ import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.buildForwardMessage
 import net.mamoe.mirai.message.data.isContentBlank
+import top.jie65535.jnr.JNudgeReply.reload
 
 object JNRCommand : CompositeCommand(
     JNudgeReply, "jnr",
@@ -106,5 +107,11 @@ object JNRCommand : CompositeCommand(
                 }
             })
         }
+    }
+
+    @SubCommand
+    @Description("重载配置")
+    suspend fun CommandSender.reload() {
+        JNRPluginConfig.reload()
     }
 }
