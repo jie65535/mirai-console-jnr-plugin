@@ -113,5 +113,6 @@ object JNRCommand : CompositeCommand(
     @Description("重载配置")
     suspend fun CommandSender.reload() {
         JNRPluginConfig.reload()
+        sendMessage("OK")
     }
 }
