@@ -8,7 +8,7 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 /jnr add [weight]    # 添加回复消息（权重默认为1）
 /jnr add <message> [weight]    # 添加简单回复消息（权重默认为1）
 /jnr clear    # 清空回复消息列表
-/jnr list    # 列出当前回复消息列表
+/jnr list [page] [pageSize]   # 列出当前回复消息列表，参数可翻页
 /jnr remove <index>    # 删除指定索引的回复消息
 /jnr reload  # 重载配置
 ```

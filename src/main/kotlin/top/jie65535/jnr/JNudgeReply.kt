@@ -18,7 +18,7 @@ object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "1.2.0",
+        version = "1.2.1",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")

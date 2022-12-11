@@ -15,6 +15,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.buildForwardMessage
 import net.mamoe.mirai.message.data.isContentBlank
 import top.jie65535.jnr.JNudgeReply.reload
+import kotlin.math.min
 
 object JNRCommand : CompositeCommand(
     JNudgeReply, "jnr",
@@ -84,7 +85,7 @@ object JNRCommand : CompositeCommand(
 
     @SubCommand
     @Description("列出当前回复消息列表")
-    suspend fun CommandSender.list() {
+    suspend fun CommandSender.list(page: Int = 0, pageSize: Int = 50) {
         val list = JNRPluginConfig.replyMessageList
         if (list.isEmpty()) {
             sendMessage("当前列表为空")
@@ -97,11 +98,20 @@ object JNRCommand : CompositeCommand(
                 sendMessage(sb.toString())
             }, {
                 if (list.size > 1) {
-                    sendMessage(buildForwardMessage(subject) {
-                        for (i in list.indices) {
-                            bot named "[$i] (${list[i].weight})" says list[i].message.deserializeMiraiCode()
-                        }
-                    })
+                    val begin = page * pageSize
+                    val end = min(list.size, (page + 1) * pageSize)
+                    if (begin < 0 || end <= begin) {
+                        sendMessage("翻页参数错误")
+                    } else {
+                        sendMessage(buildForwardMessage(subject) {
+                            for (i in begin until end) {
+                                bot named "[$i] (${list[i].weight})" says list[i].message.deserializeMiraiCode()
+                            }
+                            if (end < list.size) {
+                                bot says "当前显示 $begin~$end 共 ${list.size}"
+                            }
+                        })
+                    }
                 } else {
                     sendMessage(list[0].message.deserializeMiraiCode())
                 }
