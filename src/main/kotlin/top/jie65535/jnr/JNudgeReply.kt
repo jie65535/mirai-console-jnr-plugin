@@ -18,7 +18,7 @@ object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "1.2.1",
+        version = "1.3.0",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")
@@ -61,7 +61,7 @@ object JNudgeReply : KotlinPlugin(
                 }
 
                 // 判断间隔
-                if (isReply) {
+                val isIgnored = if (isReply) {
                     val totalWeight = replyList.sumOf { it.weight }
                     var w = Random.nextInt(totalWeight)
                     for (msg in replyList) {
@@ -72,18 +72,23 @@ object JNudgeReply : KotlinPlugin(
                             w -= msg.weight
                         }
                     }
+                    false
                 } else {
                     logger.info("正在CD中，本次已忽略")
+                    true
                 }
 
                 // 拦截事件
-                if (JNRPluginConfig.priority != EventPriority.MONITOR && JNRPluginConfig.isIntercept) {
-                    intercept()
+                if (JNRPluginConfig.priority != EventPriority.MONITOR && JNRPluginConfig.isIntercept
+                ) {
+                    // 在被忽略的情况下判断是否拦截
+                    if (!isIgnored || JNRPluginConfig.interceptAtInterval)
+                        intercept()
                 }
             }
         }
 
-        logger.info { "Plugin loaded" }
+        logger.info { "Plugin loaded. https://github.com/jie65535/mirai-console-jnr-plugin" }
     }
 
     private suspend fun doReply(message: ReplyMessage, event: NudgeEvent) {

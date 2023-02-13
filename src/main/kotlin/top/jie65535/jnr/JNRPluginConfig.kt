@@ -47,4 +47,9 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
      */
     @ValueDescription("用户私聊回复间隔（秒），0表示无限制")
     var userInterval: Long by value(0L)
+
+    /**
+     * 是否在间隔期间依然拦截事件，与 [isIntercept] 有关
+     */
+    var interceptAtInterval: Boolean by value(true)
 }
