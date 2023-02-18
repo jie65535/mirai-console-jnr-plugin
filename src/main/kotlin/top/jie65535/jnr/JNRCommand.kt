@@ -11,9 +11,8 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.event.nextEvent
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
-import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.message.data.buildForwardMessage
-import net.mamoe.mirai.message.data.isContentBlank
+import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.data.Image.Key.queryUrl
 import top.jie65535.jnr.JNudgeReply.reload
 import kotlin.math.min
 
@@ -48,13 +47,19 @@ object JNRCommand : CompositeCommand(
         if (isUser()) {
             try {
                 sendMessage("请在${WAIT_REPLY_TIMEOUT_MS / 1000}秒内发送要添加的消息内容，你可以发送空白消息来取消。")
-                val msg = withTimeout(WAIT_REPLY_TIMEOUT_MS) {
+                val nextEvent = withTimeout(WAIT_REPLY_TIMEOUT_MS) {
                     subject.globalEventChannel().nextEvent<MessageEvent>(EventPriority.MONITOR) { it.sender == user }
                 }
-                if (msg.message.isContentBlank()) {
+                if (nextEvent.message.isContentBlank()) {
                     sendMessage("已取消")
                 } else {
-                    JNRPluginConfig.replyMessageList.add(ReplyMessage(msg.message.serializeToMiraiCode(), weight))
+                    if (nextEvent.message.contains(OnlineAudio.Key)) {
+                        sendMessage("暂不支持语音消息！")
+                        return
+                    }
+
+                    saveResources(nextEvent.message)
+                    JNRPluginConfig.replyMessageList.add(ReplyMessage(nextEvent.message.serializeToMiraiCode(), weight))
                     sendMessage("已添加一条消息，权重为$weight")
                 }
             } catch (e: TimeoutCancellationException) {
@@ -62,6 +67,35 @@ object JNRCommand : CompositeCommand(
             }
         } else {
             sendMessage("必须使用聊天环境执行该命令")
+        }
+    }
+
+    /**
+     * 保存消息中的图片和音频
+     */
+    private suspend fun saveResources(message: MessageChain) {
+        for (it in message) {
+            if (it is Image) {
+                val imgDir = JNudgeReply.resolveDataFile("images")
+                if (!imgDir.exists()) {
+                    imgDir.mkdir()
+                }
+                val imgFile = imgDir.resolve(it.imageId)
+                if (!imgFile.exists()) {
+                    JNudgeReply.logger.info("下载图片 ${it.imageId}")
+                    HttpUtil.download(it.queryUrl(), imgFile)
+                }
+            } else if (it is OnlineAudio) {
+                val audioDir = JNudgeReply.resolveDataFile("audios")
+                if (!audioDir.exists()) {
+                    audioDir.mkdir()
+                }
+                val audioFile = audioDir.resolve(it.filename)
+                if (!audioFile.exists()) {
+                    JNudgeReply.logger.info("下载语音 ${it.filename}")
+                    HttpUtil.download(it.urlForDownload, audioFile)
+                }
+            }
         }
     }
 

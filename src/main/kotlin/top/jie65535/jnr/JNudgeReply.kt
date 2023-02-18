@@ -3,6 +3,7 @@ package top.jie65535.jnr
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.Member
 import net.mamoe.mirai.contact.nameCardOrNick
@@ -10,6 +11,11 @@ import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.events.NudgeEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
+import net.mamoe.mirai.message.data.Audio
+import net.mamoe.mirai.message.data.Image
+import net.mamoe.mirai.message.data.Image.Key.isUploaded
+import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import java.time.LocalDateTime
 import kotlin.random.Random
@@ -122,10 +128,31 @@ object JNudgeReply : KotlinPlugin(
                 }
 
                 // 其它
-                else -> event.subject.sendMessage(message.message.deserializeMiraiCode())
+                else -> sendRecordMessage(event.subject, message.message.deserializeMiraiCode())
             }
         } else {
-            event.subject.sendMessage(message.message.deserializeMiraiCode())
+            sendRecordMessage(event.subject, message.message.deserializeMiraiCode())
         }
+    }
+
+    private suspend fun sendRecordMessage(subject: Contact, message: MessageChain) {
+        for (it in message) {
+            if (it is Image) {
+                if (!it.isUploaded(subject.bot)) {
+                    val imgFile = resolveDataFile("images/" + it.imageId)
+                    if (imgFile.exists()) {
+                        imgFile.uploadAsImage(subject)
+                    } else {
+                        logger.warning(
+                            "图片的服务器缓存已失效，本地缓存已丢失，请重新设置该消息内的图片！" +
+                                    "消息内容：" + message.serializeToMiraiCode()
+                        )
+                    }
+                }
+            } else if (it is Audio) {
+                // TODO
+            }
+        }
+        subject.sendMessage(message)
     }
 }
