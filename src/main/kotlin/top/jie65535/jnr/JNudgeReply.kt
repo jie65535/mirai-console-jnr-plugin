@@ -70,7 +70,7 @@ object JNudgeReply : KotlinPlugin(
                             groupCoolDownTime[subject.id] = now
                         if (!isReply && (groupCoolDownTime[subject.id]?.plusMinutes(coolDownTime.toLong())!! > now)){
                             logger.info("cd中，跳过")
-                        }else if ((randomNumber >= (100-JNRPluginConfig.groupCoolDownTriggerProbability) && jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
+                        }else if ((randomNumber <= JNRPluginConfig.groupCoolDownTriggerProbability && jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
                             groupCoolDownTime[subject.id] = now
                             isReply = false
                             jnrCount = 1
