@@ -43,7 +43,8 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
 
     /**
      * 群共享冷却时间
-     * 本设定优先级高于群间隔时间*/
+     * 本设定优先级低于群间隔时间
+     * 如需使用请将群间隔时间设置为0*/
     @ValueDescription("群共享冷却时间上界，0表示无限制")
     var groupCoolDownTimeUpperBound: Long by value(0L)
     @ValueDescription("群共享冷却时间下界，0表示无限制")
