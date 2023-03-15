@@ -36,6 +36,7 @@ object JNudgeReply : KotlinPlugin(
     private var coolDownTime = (JNRPluginConfig.groupCoolDownTimeLowerBound..JNRPluginConfig.groupCoolDownTimeUpperBound).random().toInt()
     private var isReply = true
     private val groupCoolDownTime = mutableMapOf<Long, LocalDateTime>()
+    private var groupCountingInterval = mutableMapOf<Long, LocalDateTime>()
 
     override fun onEnable() {
         JNRPluginConfig.reload()
@@ -65,15 +66,22 @@ object JNudgeReply : KotlinPlugin(
                         }
                     } else if (JNRPluginConfig.groupCoolDownTimeUpperBound > 0) {
                         val randomNumber = (1..100).random()
-                        if (groupCoolDownTime[subject.id] == null)
+                        if (groupCoolDownTime[subject.id] == null) {
                             groupCoolDownTime[subject.id] = now
                             groupJnrCount[subject.id] = 1
+                            groupCountingInterval[subject.id] = now
+                        }
+                        if (JNRPluginConfig.groupCoolDownInterval != 0L && groupCountingInterval[subject.id]?.plusMinutes(JNRPluginConfig.groupCoolDownInterval)!! <= now){
+                            groupJnrCount[subject.id] = 1
+                            groupCountingInterval[subject.id] = now
+                        }
                         if (!isReply && (groupCoolDownTime[subject.id]?.plusMinutes(coolDownTime.toLong())!! > now)){
                             logger.info("cd中，跳过")
                         }else if ((randomNumber <= JNRPluginConfig.groupCoolDownTriggerProbability && groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
                             groupCoolDownTime[subject.id] = now
                             isReply = false
                             groupJnrCount[subject.id] = 1
+                            groupCountingInterval[subject.id] = now
                             val s = String.format(JNRPluginConfig.replyMessageForRest, coolDownTime.toString())
                             sendRecordMessage(this.subject,s.deserializeMiraiCode())
                         } else {

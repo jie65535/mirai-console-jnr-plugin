@@ -53,6 +53,8 @@ groupCoolDownTriggerCountMin: 6
 groupCoolDownTriggerCountMax: 12
 # 达到最低次数后的触发概率,1~100，按百分比触发
 groupCoolDownTriggerProbability: 50
+# 间隔多长时间重置计数（分钟），0表示不重置
+groupCoolDownInterval: 10
 # 用户私聊回复间隔（秒），0表示无限制
 userInterval: 0
 ```

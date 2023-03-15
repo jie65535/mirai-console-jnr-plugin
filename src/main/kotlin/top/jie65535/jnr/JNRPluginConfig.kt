@@ -59,6 +59,8 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
     var groupCoolDownTriggerCountMax: Long by value(12L)
     @ValueDescription("达到最低次数后的触发概率,1~100，按百分比触发")
     var groupCoolDownTriggerProbability: Int by value(50)
+    @ValueDescription("间隔多长时间重置计数（分钟），0表示不重置")
+    var groupCoolDownInterval: Long by value(10L)
     /**
      * 用户间隔（单位秒）
      * 0 表示无限制
