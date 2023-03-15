@@ -1,6 +1,5 @@
 package top.jie65535.jnr
 
-import kotlinx.serialization.descriptors.PrimitiveKind
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
@@ -33,7 +32,7 @@ object JNudgeReply : KotlinPlugin(
 ) {
     private val groupLastReply = mutableMapOf<Long, LocalDateTime>()
     private val userLastReply = mutableMapOf<Long, LocalDateTime>()
-    private var jnrCount = 1
+    private var groupJnrCount = mutableMapOf<Long, Long>()
     private var coolDownTime = (JNRPluginConfig.groupCoolDownTimeLowerBound..JNRPluginConfig.groupCoolDownTimeUpperBound).random().toInt()
     private var isReply = true
     private val groupCoolDownTime = mutableMapOf<Long, LocalDateTime>()
@@ -66,18 +65,21 @@ object JNudgeReply : KotlinPlugin(
                         }
                     } else if (JNRPluginConfig.groupCoolDownTimeUpperBound > 0) {
                         val randomNumber = (1..100).random()
+                        logger.info(randomNumber.toString())
+                        logger.info(JNRPluginConfig.groupCoolDownTriggerProbability.toString())
                         if (groupCoolDownTime[subject.id] == null)
                             groupCoolDownTime[subject.id] = now
+                            groupJnrCount[subject.id] = 1
                         if (!isReply && (groupCoolDownTime[subject.id]?.plusMinutes(coolDownTime.toLong())!! > now)){
                             logger.info("cd中，跳过")
-                        }else if ((randomNumber <= JNRPluginConfig.groupCoolDownTriggerProbability && jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (jnrCount >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
+                        }else if ((randomNumber <= JNRPluginConfig.groupCoolDownTriggerProbability && groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
                             groupCoolDownTime[subject.id] = now
                             isReply = false
-                            jnrCount = 1
+                            groupJnrCount[subject.id] = 1
                             val s = String.format(JNRPluginConfig.replyMessageForRest, coolDownTime.toString())
                             sendRecordMessage(this.subject,s.deserializeMiraiCode())
                         } else {
-                            jnrCount += 1
+                            groupJnrCount[subject.id] = groupJnrCount[subject.id]!! + 1
                             coolDownTime = (JNRPluginConfig.groupCoolDownTimeLowerBound..JNRPluginConfig.groupCoolDownTimeUpperBound).random().toInt()
                             isReply = true
                         }
@@ -124,8 +126,10 @@ object JNudgeReply : KotlinPlugin(
                 // 戳回去
                 message.message.startsWith("#nudge") -> {
                     event.from.nudge().sendTo(event.subject)
-                    val messageTemp = message.message.substring(6)
-                    sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    if (message.message.length > 6) {
+                        val messageTemp = message.message.substring(6)
+                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    }
                     logger.info("已尝试戳回发送者")
                 }
 

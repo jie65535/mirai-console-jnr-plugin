@@ -44,19 +44,21 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
     /**
      * 群共享冷却时间
      * 本设定优先级低于群间隔时间
-     * 如需使用请将群间隔时间设置为0*/
-    @ValueDescription("群共享冷却时间上界，0表示无限制")
+     * 如需使用请将群间隔时间设置为0
+     * 请不要一起打开
+     * */
+    @ValueDescription("群共享冷却时间上界（分钟），0表示无限制")
     var groupCoolDownTimeUpperBound: Long by value(0L)
-    @ValueDescription("群共享冷却时间下界，0表示无限制")
+    @ValueDescription("群共享冷却时间下界（分钟），0表示无限制")
     var groupCoolDownTimeLowerBound: Long by value(0L)
-    @ValueDescription("冷却触发发送语句")
+    @ValueDescription("冷却触发发送语句,%s为占位符，可不加，用来在消息中显示冷却时长")
     var replyMessageForRest: String by value("呜呜，被戳傻了。休息%s分钟")
     @ValueDescription("群共享冷却默认触发最低次数")
-    var groupCoolDownTriggerCountMin: Long by value(0L)
+    var groupCoolDownTriggerCountMin: Long by value(6L)
     @ValueDescription("群共享冷却默认触发最高次数，到此次数必定触发")
-    var groupCoolDownTriggerCountMax: Long by value(0L)
+    var groupCoolDownTriggerCountMax: Long by value(12L)
     @ValueDescription("达到最低次数后的触发概率,1~100，按百分比触发")
-    var groupCoolDownTriggerProbability: Int by value(0)
+    var groupCoolDownTriggerProbability: Int by value(50)
     /**
      * 用户间隔（单位秒）
      * 0 表示无限制
