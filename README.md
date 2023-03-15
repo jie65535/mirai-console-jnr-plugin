@@ -41,7 +41,7 @@ groupInterval: 0
 # 群共享冷却时间上界（分钟），0表示无限制
 # 请不要和群回复间隔一起打开，避免出现问题
 groupCoolDownTimeUpperBound: 0
-# 群共享冷却时间下界（分钟），0表示无限制
+# 群共享冷却时间下界（分钟）
 # 以下界<=x<=上界为范围产生随机数随机休息时间
 groupCoolDownTimeLowerBound: 0
 # 冷却触发发送语句
