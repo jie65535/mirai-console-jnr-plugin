@@ -49,7 +49,7 @@ object JNRPluginConfig : AutoSavePluginConfig("jnr") {
      * */
     @ValueDescription("群共享冷却时间上界（分钟），0表示无限制")
     var groupCoolDownTimeUpperBound: Long by value(0L)
-    @ValueDescription("群共享冷却时间下界（分钟），0表示无限制")
+    @ValueDescription("群共享冷却时间下界（分钟）")
     var groupCoolDownTimeLowerBound: Long by value(0L)
     @ValueDescription("冷却触发发送语句,%s为占位符，可不加，用来在消息中显示冷却时长")
     var replyMessageForRest: String by value("呜呜，被戳傻了。休息%s分钟")
