@@ -65,8 +65,6 @@ object JNudgeReply : KotlinPlugin(
                         }
                     } else if (JNRPluginConfig.groupCoolDownTimeUpperBound > 0) {
                         val randomNumber = (1..100).random()
-                        logger.info(randomNumber.toString())
-                        logger.info(JNRPluginConfig.groupCoolDownTriggerProbability.toString())
                         if (groupCoolDownTime[subject.id] == null)
                             groupCoolDownTime[subject.id] = now
                             groupJnrCount[subject.id] = 1
