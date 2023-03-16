@@ -21,7 +21,7 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 - `#group.mute:30` 禁言30s, 可以自定义禁言时间, 单位秒
 - `#ignore` 忽略
 
-Tips：可以在#nudge之后直接添加消息以在回戳时同时回复消息
+Tips：可以在特殊消息之后直接添加消息以在执行时同时回复消息
 ## 配置文件
 
 文件位置：`config/me.jie65535.mirai-console-jnr-plugin/jnr.yml`
@@ -38,23 +38,6 @@ priority: HIGH
 isIntercept: true
 # 群回复间隔（秒），0表示无限制
 groupInterval: 0
-# 群共享冷却时间上界（分钟），0表示无限制
-# 请不要和群回复间隔一起打开，避免出现问题
-groupCoolDownTimeUpperBound: 0
-# 群共享冷却时间下界（分钟）
-# 以下界<=x<=上界为范围产生随机数随机休息时间
-groupCoolDownTimeLowerBound: 0
-# 冷却触发发送语句
-# %s为占位符，可不加，用来在消息中显示冷却时长
-replyMessageForRest: 呜呜，被戳傻了。休息%s分钟
-# 群共享冷却默认触发最低次数
-groupCoolDownTriggerCountMin: 6
-# 群共享冷却默认触发最高次数，到此次数必定触发
-groupCoolDownTriggerCountMax: 12
-# 达到最低次数后的触发概率,1~100，按百分比触发
-groupCoolDownTriggerProbability: 50
-# 间隔多长时间重置计数（分钟），0表示不重置
-groupCoolDownInterval: 10
 # 用户私聊回复间隔（秒），0表示无限制
 userInterval: 0
 ```

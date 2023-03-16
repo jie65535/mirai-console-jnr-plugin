@@ -18,6 +18,8 @@ import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import java.time.LocalDateTime
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import kotlin.random.Random
 
 object JNudgeReply : KotlinPlugin(
@@ -32,11 +34,6 @@ object JNudgeReply : KotlinPlugin(
 ) {
     private val groupLastReply = mutableMapOf<Long, LocalDateTime>()
     private val userLastReply = mutableMapOf<Long, LocalDateTime>()
-    private var groupJnrCount = mutableMapOf<Long, Long>()
-    private var coolDownTime = (JNRPluginConfig.groupCoolDownTimeLowerBound..JNRPluginConfig.groupCoolDownTimeUpperBound).random().toInt()
-    private var isReply = true
-    private val groupCoolDownTime = mutableMapOf<Long, LocalDateTime>()
-    private var groupCountingInterval = mutableMapOf<Long, LocalDateTime>()
 
     override fun onEnable() {
         JNRPluginConfig.reload()
@@ -46,6 +43,7 @@ object JNudgeReply : KotlinPlugin(
             if (target.id == bot.id && target.id != from.id && JNRPluginConfig.replyMessageList.isNotEmpty()) {
                 var replyList: List<ReplyMessage> = JNRPluginConfig.replyMessageList
                 val now = LocalDateTime.now()
+                var isReply = true
                 if (subject !is Group) {
                     if (JNRPluginConfig.userInterval > 0) {
                         val t = userLastReply[subject.id]
@@ -63,31 +61,6 @@ object JNudgeReply : KotlinPlugin(
                             groupLastReply[subject.id] = now
                         } else {
                             isReply = false
-                        }
-                    } else if (JNRPluginConfig.groupCoolDownTimeUpperBound > 0) {
-                        val randomNumber = (1..100).random()
-                        if (groupCoolDownTime[subject.id] == null) {
-                            groupCoolDownTime[subject.id] = now
-                            groupJnrCount[subject.id] = 1
-                            groupCountingInterval[subject.id] = now
-                        }
-                        if (JNRPluginConfig.groupCoolDownInterval != 0L && groupCountingInterval[subject.id]?.plusMinutes(JNRPluginConfig.groupCoolDownInterval)!! <= now){
-                            groupJnrCount[subject.id] = 1
-                            groupCountingInterval[subject.id] = now
-                        }
-                        if (!isReply && (groupCoolDownTime[subject.id]?.plusMinutes(coolDownTime.toLong())!! > now)){
-                            logger.info("cd中，跳过")
-                        }else if ((randomNumber <= JNRPluginConfig.groupCoolDownTriggerProbability && groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMin) || (groupJnrCount[subject.id]!! >= JNRPluginConfig.groupCoolDownTriggerCountMax)){
-                            groupCoolDownTime[subject.id] = now
-                            isReply = false
-                            groupJnrCount[subject.id] = 1
-                            groupCountingInterval[subject.id] = now
-                            val s = String.format(JNRPluginConfig.replyMessageForRest, coolDownTime.toString())
-                            sendRecordMessage(this.subject,s.deserializeMiraiCode())
-                        } else {
-                            groupJnrCount[subject.id] = groupJnrCount[subject.id]!! + 1
-                            coolDownTime = (JNRPluginConfig.groupCoolDownTimeLowerBound..JNRPluginConfig.groupCoolDownTimeUpperBound).random().toInt()
-                            isReply = true
                         }
                     }
                     if ((from as Member).permission.level >= (subject as Group).botPermission.level) {
@@ -140,14 +113,19 @@ object JNudgeReply : KotlinPlugin(
                 }
 
                 // 禁言
-                message.message.startsWith("#group.mute:") -> {
-                    val duration = message.message.substringAfter(':').toIntOrNull()
-                    if (duration == null) {
+                message.message.startsWith("#group.mute\\:") -> {
+                    val duration = RegexMatches.main(message.message)
+                    if (duration == 0) {
                         logger.warning("戳一戳禁言失败：\"${message.message}\" 格式不正确")
                     } else {
                         val member: Member = event.from as Member
                         try {
                             member.mute(duration)
+                            val s = duration.toString()
+                            if (message.message.length > (13 + s.length)){
+                                val messageTemp = String.format(message.message.substring(13 + s.length),s)
+                                sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                            }
                             logger.info("戳一戳禁言目标 ${member.nameCardOrNick}(${member.id}) $duration 秒")
                         } catch (e: Throwable) {
                             logger.warning("戳一戳禁言失败", e)
@@ -183,9 +161,24 @@ object JNudgeReply : KotlinPlugin(
                     }
                 }
             } else if (it is Audio) {
-                // TODO
+                // val audioFile = resolveDataFile("audios/" + it.)
             }
         }
         subject.sendMessage(message)
     }
+
+    object RegexMatches {
+        @JvmStatic
+        fun main(str: String): Int {
+            val pattern = "[0-9]+"
+            val r: Pattern = Pattern.compile(pattern)
+            val m: Matcher = r.matcher(str)
+            return if (m.find()){
+                m.group(0).toInt()
+            }else{
+                0
+            }
+        }
+    }
+
 }
