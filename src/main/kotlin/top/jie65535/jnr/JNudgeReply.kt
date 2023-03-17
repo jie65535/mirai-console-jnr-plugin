@@ -3,18 +3,14 @@ package top.jie65535.jnr
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.contact.Contact
-import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.contact.Member
-import net.mamoe.mirai.contact.nameCardOrNick
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.events.NudgeEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
-import net.mamoe.mirai.message.data.Audio
-import net.mamoe.mirai.message.data.Image
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.isUploaded
-import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import java.time.LocalDateTime
@@ -138,6 +134,17 @@ object JNudgeReply : KotlinPlugin(
                     logger.info("已忽略本次戳一戳回复")
                 }
 
+                message.message.startsWith("#Audio") -> {
+                    val audioFile = resolveDataFile("audios/" + message.message.substring(6)).toExternalResource()
+                    if (event.subject is Group){
+                        val messageTemp = (event.subject as Group).uploadAudio(audioFile)
+                        sendRecordMessage(event.subject, messageTemp.toMessageChain())
+                    } else {
+                        val messageTemp = "暂不支持私聊发送语音"
+                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    }
+                }
+
                 // 其它
                 else -> sendRecordMessage(event.subject, message.message.deserializeMiraiCode())
             }
@@ -160,8 +167,6 @@ object JNudgeReply : KotlinPlugin(
                         )
                     }
                 }
-            } else if (it is Audio) {
-                // val audioFile = resolveDataFile("audios/" + it.)
             }
         }
         subject.sendMessage(message)
