@@ -54,12 +54,16 @@ object JNRCommand : CompositeCommand(
                     sendMessage("已取消")
                 } else {
                     if (nextEvent.message.contains(OnlineAudio.Key)) {
-                        sendMessage("暂不支持语音消息！")
-                        return
+                        saveResources(nextEvent.message)
+                        for (it in nextEvent.message){
+                            if (it is OnlineAudio){
+                                JNRPluginConfig.replyMessageList.add(ReplyMessage(("#Audio" + it.filename), weight))
+                            }
+                        }
+                    } else {
+                        saveResources(nextEvent.message)
+                        JNRPluginConfig.replyMessageList.add(ReplyMessage(nextEvent.message.serializeToMiraiCode(), weight))
                     }
-
-                    saveResources(nextEvent.message)
-                    JNRPluginConfig.replyMessageList.add(ReplyMessage(nextEvent.message.serializeToMiraiCode(), weight))
                     sendMessage("已添加一条消息，权重为$weight")
                 }
             } catch (e: TimeoutCancellationException) {

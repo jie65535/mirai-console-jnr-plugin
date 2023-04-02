@@ -3,21 +3,19 @@ package top.jie65535.jnr
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.contact.Contact
-import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.contact.Member
-import net.mamoe.mirai.contact.nameCardOrNick
+import net.mamoe.mirai.contact.*
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.events.NudgeEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
-import net.mamoe.mirai.message.data.Audio
-import net.mamoe.mirai.message.data.Image
+import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.data.Image.Key.isUploaded
-import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import java.time.LocalDateTime
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import kotlin.random.Random
 
 object JNudgeReply : KotlinPlugin(
@@ -101,20 +99,29 @@ object JNudgeReply : KotlinPlugin(
         if (message.message.startsWith("#")) {
             when {
                 // 戳回去
-                message.message == "#nudge" -> {
+                message.message.startsWith("#nudge") -> {
                     event.from.nudge().sendTo(event.subject)
+                    if (message.message.length > 6) {
+                        val messageTemp = message.message.substring(6)
+                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    }
                     logger.info("已尝试戳回发送者")
                 }
 
                 // 禁言
-                message.message.startsWith("#group.mute:") -> {
-                    val duration = message.message.substringAfter(':').toIntOrNull()
-                    if (duration == null) {
+                message.message.startsWith("#group.mute\\:") -> {
+                    val duration = RegexMatches.main(message.message)
+                    if (duration == 0) {
                         logger.warning("戳一戳禁言失败：\"${message.message}\" 格式不正确")
                     } else {
                         val member: Member = event.from as Member
                         try {
                             member.mute(duration)
+                            val s = duration.toString()
+                            if (message.message.length > (13 + s.length)){
+                                val messageTemp = String.format(message.message.substring(13 + s.length),s)
+                                sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                            }
                             logger.info("戳一戳禁言目标 ${member.nameCardOrNick}(${member.id}) $duration 秒")
                         } catch (e: Throwable) {
                             logger.warning("戳一戳禁言失败", e)
@@ -125,6 +132,17 @@ object JNudgeReply : KotlinPlugin(
                 // 忽略
                 message.message == "#ignore" -> {
                     logger.info("已忽略本次戳一戳回复")
+                }
+
+                message.message.startsWith("#Audio") -> {
+                    val audioFile = resolveDataFile("audios/" + message.message.substring(6)).toExternalResource()
+                    if (event.subject is Group){
+                        val messageTemp = (event.subject as Group).uploadAudio(audioFile)
+                        sendRecordMessage(event.subject, messageTemp.toMessageChain())
+                    } else {
+                        val messageTemp = "暂不支持私聊发送语音"
+                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    }
                 }
 
                 // 其它
@@ -149,10 +167,23 @@ object JNudgeReply : KotlinPlugin(
                         )
                     }
                 }
-            } else if (it is Audio) {
-                // TODO
             }
         }
         subject.sendMessage(message)
     }
+
+    object RegexMatches {
+        @JvmStatic
+        fun main(str: String): Int {
+            val pattern = "[0-9]+"
+            val r: Pattern = Pattern.compile(pattern)
+            val m: Matcher = r.matcher(str)
+            return if (m.find()){
+                m.group(0).toInt()
+            }else{
+                0
+            }
+        }
+    }
+
 }
