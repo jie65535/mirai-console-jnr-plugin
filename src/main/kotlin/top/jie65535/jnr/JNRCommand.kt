@@ -57,7 +57,7 @@ object JNRCommand : CompositeCommand(
                         saveResources(nextEvent.message)
                         for (it in nextEvent.message){
                             if (it is OnlineAudio){
-                                JNRPluginConfig.replyMessageList.add(ReplyMessage(("#Audio" + it.filename), weight))
+                                JNRPluginConfig.replyMessageList.add(ReplyMessage("#Audio:${it.filename}", weight))
                             }
                         }
                     } else {

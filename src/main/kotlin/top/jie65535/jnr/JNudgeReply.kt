@@ -60,7 +60,7 @@ object JNudgeReply : KotlinPlugin(
                         }
                     }
                     if ((from as Member).permission.level >= (subject as Group).botPermission.level) {
-                        replyList = replyList.filter { !it.message.startsWith("#group.mute:") }
+                        replyList = replyList.filter { !it.message.startsWith("#group.mute\\:") }
                     }
                 }
 
@@ -134,8 +134,8 @@ object JNudgeReply : KotlinPlugin(
                     logger.info("已忽略本次戳一戳回复")
                 }
 
-                message.message.startsWith("#Audio") -> {
-                    val audioFile = resolveDataFile("audios/" + message.message.substring(6)).toExternalResource()
+                message.message.startsWith("#Audio:") -> {
+                    val audioFile = resolveDataFile("audios/" + message.message.substring(7)).toExternalResource()
                     if (event.subject is Group){
                         val messageTemp = (event.subject as Group).uploadAudio(audioFile)
                         sendRecordMessage(event.subject, messageTemp.toMessageChain())
