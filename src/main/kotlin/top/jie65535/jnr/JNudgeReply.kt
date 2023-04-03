@@ -14,15 +14,15 @@ import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
 import java.time.LocalDateTime
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 import kotlin.random.Random
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "1.3.0",
+        version = "1.4.0",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")
@@ -95,34 +95,41 @@ object JNudgeReply : KotlinPlugin(
         logger.info { "Plugin loaded. https://github.com/jie65535/mirai-console-jnr-plugin" }
     }
 
-    private suspend fun doReply(message: ReplyMessage, event: NudgeEvent) {
-        if (message.message.startsWith("#")) {
+    private suspend fun doReply(reply: ReplyMessage, event: NudgeEvent) {
+        val replyMessageChain = reply.message.deserializeMiraiCode()
+        val replyMessage = replyMessageChain.content
+        if (replyMessage.startsWith("#")) {
             when {
                 // 戳回去
-                message.message.startsWith("#nudge") -> {
+                replyMessage.startsWith("#nudge") -> {
                     event.from.nudge().sendTo(event.subject)
-                    if (message.message.length > 6) {
-                        val messageTemp = message.message.substring(6)
-                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                    val replyMsg = replyMessage.substring("#nudge".length).removePrefix(":")
+                    if (replyMsg.isNotBlank()) {
+                        sendRecordMessage(event.subject, messageChainOf(PlainText(replyMsg.trim())))
+                        logger.info("已尝试戳回发送者并回复消息")
+                    } else {
+                        logger.info("已尝试戳回发送者")
                     }
-                    logger.info("已尝试戳回发送者")
                 }
 
                 // 禁言
-                message.message.startsWith("#group.mute\\:") -> {
-                    val duration = RegexMatches.main(message.message)
-                    if (duration == 0) {
-                        logger.warning("戳一戳禁言失败：\"${message.message}\" 格式不正确")
+                replyMessage.startsWith("#group.mute:") -> {
+                    val args = replyMessage.substring("#group.mute:".length).split(':')
+                    val durationS = if (args.isNotEmpty()) args[0].toIntOrNull() else 0
+                    if (durationS == null || durationS < 1) {
+                        logger.warning("戳一戳禁言失败：\"${replyMessage}\" 格式不正确")
                     } else {
                         val member: Member = event.from as Member
                         try {
-                            member.mute(duration)
-                            val s = duration.toString()
-                            if (message.message.length > (13 + s.length)){
-                                val messageTemp = String.format(message.message.substring(13 + s.length),s)
-                                sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                            member.mute(durationS)
+                            val duration = durationS.toDuration(DurationUnit.SECONDS)
+                            if (args.size > 1 && args[1].isNotBlank()) {
+                                val replyMsg = args[1].trim()
+//                                    .replace("{duration}", duration.toString())
+//              如果禁言时间是在消息中设置的，那么用户也可以同时设置回复的内容里带时间，因此无需添加格式化，除非支持随机禁言时间，可以再考虑
+                                sendRecordMessage(event.subject, messageChainOf(PlainText(replyMsg)))
                             }
-                            logger.info("戳一戳禁言目标 ${member.nameCardOrNick}(${member.id}) $duration 秒")
+                            logger.info("戳一戳禁言目标 ${member.nameCardOrNick}(${member.id}) $duration")
                         } catch (e: Throwable) {
                             logger.warning("戳一戳禁言失败", e)
                         }
@@ -130,26 +137,29 @@ object JNudgeReply : KotlinPlugin(
                 }
 
                 // 忽略
-                message.message == "#ignore" -> {
+                replyMessage == "#ignore" -> {
                     logger.info("已忽略本次戳一戳回复")
                 }
 
-                message.message.startsWith("#Audio:") -> {
-                    val audioFile = resolveDataFile("audios/" + message.message.substring(7)).toExternalResource()
-                    if (event.subject is Group){
-                        val messageTemp = (event.subject as Group).uploadAudio(audioFile)
+                // 音频回复
+                replyMessage.startsWith("#audio:") -> {
+                    val filename = replyMessage.substring("#audio:".length)
+                    val audioFile = resolveDataFile("audios/$filename").toExternalResource()
+                    if (event.subject is AudioSupported) {
+                        logger.info("上传并回复语音 $filename")
+                        val messageTemp = (event.subject as AudioSupported).uploadAudio(audioFile)
                         sendRecordMessage(event.subject, messageTemp.toMessageChain())
                     } else {
-                        val messageTemp = "暂不支持私聊发送语音"
-                        sendRecordMessage(event.subject, messageTemp.deserializeMiraiCode())
+                        logger.warning("当前上下文不支持回复语音")
+                        sendRecordMessage(event.subject, messageChainOf(PlainText("[语音消息] 当前上下文不支持")))
                     }
                 }
 
                 // 其它
-                else -> sendRecordMessage(event.subject, message.message.deserializeMiraiCode())
+                else -> sendRecordMessage(event.subject, replyMessageChain)
             }
         } else {
-            sendRecordMessage(event.subject, message.message.deserializeMiraiCode())
+            sendRecordMessage(event.subject, replyMessageChain)
         }
     }
 
@@ -171,19 +181,4 @@ object JNudgeReply : KotlinPlugin(
         }
         subject.sendMessage(message)
     }
-
-    object RegexMatches {
-        @JvmStatic
-        fun main(str: String): Int {
-            val pattern = "[0-9]+"
-            val r: Pattern = Pattern.compile(pattern)
-            val m: Matcher = r.matcher(str)
-            return if (m.find()){
-                m.group(0).toInt()
-            }else{
-                0
-            }
-        }
-    }
-
 }

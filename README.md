@@ -18,13 +18,14 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 设置回复消息为以下内容，代表特殊含义
 
 - `#nudge` 戳回去
+- `#nudge:戳我干嘛！` 戳回去，并且回复一条消息
 - `#group.mute:30` 禁言30s, 可以自定义禁言时间, 单位秒
-- `#ignore` 忽略
+- `#group.mute:60:生气了！禁言你1分钟` 同上，并且回复一条消息
+- `#ignore` 忽略本次戳一戳
+- `#audio:XXX.amr` 回复音频，参数通常为 XXX.amr，服务器要求文件名后缀必须为 ".amr"，但其编码方式也有可能是非
+  AudioCodec.AMR。
+  音频文件保存在 `data/me.jie65535.mirai-console-jnr-plugin/` 目录下，理论上你也可以手工设置音频文件。
 
-Tips：
-
-- 可以在特殊消息之后直接添加消息以在执行时同时回复消息（除了忽略）
-- 可以在禁言时发送的特殊消息后添加"%s"以在回复的消息中加上禁言时长
 ## 配置文件
 
 文件位置：`config/me.jie65535.mirai-console-jnr-plugin/jnr.yml`
