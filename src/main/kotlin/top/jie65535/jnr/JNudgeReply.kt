@@ -9,7 +9,6 @@ import net.mamoe.mirai.event.events.NudgeEvent
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.message.data.Image.Key.isUploaded
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import net.mamoe.mirai.utils.info
@@ -164,21 +163,22 @@ object JNudgeReply : KotlinPlugin(
     }
 
     private suspend fun sendRecordMessage(subject: Contact, message: MessageChain) {
+        val modifiedChain = MessageChainBuilder()
         for (it in message) {
+            var innerMessage = it
             if (it is Image) {
-                if (!it.isUploaded(subject.bot)) {
-                    val imgFile = resolveDataFile("images/" + it.imageId)
-                    if (imgFile.exists()) {
-                        imgFile.uploadAsImage(subject)
-                    } else {
-                        logger.warning(
-                            "图片的服务器缓存已失效，本地缓存已丢失，请重新设置该消息内的图片！" +
-                                    "消息内容：" + message.serializeToMiraiCode()
-                        )
-                    }
+                val imgFile = resolveDataFile("images/" + it.imageId)
+                if (imgFile.exists()) {
+                    innerMessage = imgFile.uploadAsImage(subject)
+                } else {
+                    logger.warning(
+                        "图片的本地缓存已丢失，请重新设置该消息内的图片！" +
+                                "消息内容：" + message.serializeToMiraiCode()
+                    )
                 }
             }
+            modifiedChain.append(innerMessage)
         }
-        subject.sendMessage(message)
+        subject.sendMessage(modifiedChain.build())
     }
 }
