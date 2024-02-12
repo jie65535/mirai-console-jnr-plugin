@@ -26,6 +26,15 @@ MiraiConsolePlugin 自定义戳一戳回复消息
   AudioCodec.AMR。
   音频文件保存在 `data/me.jie65535.mirai-console-jnr-plugin/` 目录下，理论上你也可以手工设置音频文件。
 
+## 占位符
+
+- `{cardName}` 会被替换为群名片或昵称
+- `{nickName}` 会被替换为用户昵称`
+- `{groupName}` 会被替换为群名称
+- `{botCardName}` 会被替换为机器人群名片或昵称
+- `{botNickName}` 会被替换为机器人昵称
+- 更多欢迎 ISSUE 或者 PR 补充...
+
 ## 配置文件
 
 文件位置：`config/me.jie65535.mirai-console-jnr-plugin/jnr.yml`

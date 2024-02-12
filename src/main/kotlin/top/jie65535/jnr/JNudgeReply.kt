@@ -3,7 +3,10 @@ package top.jie65535.jnr
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.contact.AudioSupported
+import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.contact.Member
+import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.EventPriority
 import net.mamoe.mirai.event.events.NudgeEvent
 import net.mamoe.mirai.event.globalEventChannel
@@ -21,7 +24,7 @@ object JNudgeReply : KotlinPlugin(
     JvmPluginDescription(
         id = "me.jie65535.mirai-console-jnr-plugin",
         name = "J Nudge Reply",
-        version = "1.4.0",
+        version = "1.5.0",
     ) {
         author("jie65535")
         info("""自定义戳一戳回复插件""")
@@ -104,7 +107,7 @@ object JNudgeReply : KotlinPlugin(
                     event.from.nudge().sendTo(event.subject)
                     val replyMsg = replyMessage.substring("#nudge".length).removePrefix(":")
                     if (replyMsg.isNotBlank()) {
-                        sendRecordMessage(event.subject, messageChainOf(PlainText(replyMsg.trim())))
+                        sendRecordMessage(event, messageChainOf(PlainText(replyMsg.trim())))
                         logger.info("已尝试戳回发送者并回复消息")
                     } else {
                         logger.info("已尝试戳回发送者")
@@ -126,7 +129,7 @@ object JNudgeReply : KotlinPlugin(
                                 val replyMsg = args[1].trim()
 //                                    .replace("{duration}", duration.toString())
 //              如果禁言时间是在消息中设置的，那么用户也可以同时设置回复的内容里带时间，因此无需添加格式化，除非支持随机禁言时间，可以再考虑
-                                sendRecordMessage(event.subject, messageChainOf(PlainText(replyMsg)))
+                                sendRecordMessage(event, messageChainOf(PlainText(replyMsg)))
                             }
                             logger.info("戳一戳禁言目标 ${member.nameCardOrNick}(${member.id}) $duration")
                         } catch (e: Throwable) {
@@ -147,38 +150,62 @@ object JNudgeReply : KotlinPlugin(
                     if (event.subject is AudioSupported) {
                         logger.info("上传并回复语音 $filename")
                         val messageTemp = (event.subject as AudioSupported).uploadAudio(audioFile)
-                        sendRecordMessage(event.subject, messageTemp.toMessageChain())
+                        sendRecordMessage(event, messageTemp.toMessageChain())
                     } else {
                         logger.warning("当前上下文不支持回复语音")
-                        sendRecordMessage(event.subject, messageChainOf(PlainText("[语音消息] 当前上下文不支持")))
+                        sendRecordMessage(event, messageChainOf(PlainText("[语音消息] 当前上下文不支持")))
                     }
                 }
 
                 // 其它
-                else -> sendRecordMessage(event.subject, replyMessageChain)
+                else -> sendRecordMessage(event, replyMessageChain)
             }
         } else {
-            sendRecordMessage(event.subject, replyMessageChain)
+            sendRecordMessage(event, replyMessageChain)
         }
     }
 
-    private suspend fun sendRecordMessage(subject: Contact, message: MessageChain) {
+    private suspend fun sendRecordMessage(event: NudgeEvent, message: MessageChain) {
         val modifiedChain = MessageChainBuilder()
         for (it in message) {
             var innerMessage = it
             if (it is Image) {
                 val imgFile = resolveDataFile("images/" + it.imageId)
                 if (imgFile.exists()) {
-                    innerMessage = imgFile.uploadAsImage(subject)
+                    innerMessage = imgFile.uploadAsImage(event.subject)
                 } else {
                     logger.warning(
                         "图片的本地缓存已丢失，请重新设置该消息内的图片！" +
                                 "消息内容：" + message.serializeToMiraiCode()
                     )
                 }
+            } else if (it is PlainText) {
+                /**
+                 * 占位符
+                 * - `{cardName}` 会被替换为群名片或昵称
+                 * - `{nickName}` 会被替换为用户昵称`
+                 * - `{groupName}` 会被替换为群名称
+                 * - `{botCardName}` 会被替换为机器人群名片或昵称
+                 * - `{botNickName}` 会被替换为机器人昵称
+                 */
+                val content = it.content
+                    .replace("{cardName}", event.from.nameCardOrNick)
+                    .replace("{nickName}", event.from.nick)
+                    .replace("{botCardName}", event.target.nameCardOrNick)
+                    .replace("{botNickName}", event.target.nick)
+                    .replace(
+                        "{groupName}",
+                        if (event.subject is Group) {
+                            (event.subject as Group).name
+                        } else {
+                            event.from.nick
+                        }
+                    )
+
+                innerMessage = PlainText(content)
             }
             modifiedChain.append(innerMessage)
         }
-        subject.sendMessage(modifiedChain.build())
+        event.subject.sendMessage(modifiedChain.build())
     }
 }
