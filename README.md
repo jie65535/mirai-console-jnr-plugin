@@ -28,11 +28,9 @@ MiraiConsolePlugin 自定义戳一戳回复消息
 
 ## 占位符
 
-- `{cardName}` 会被替换为群名片或昵称
-- `{nickName}` 会被替换为用户昵称`
+- `{name}` 会被替换为群名片或昵称
+- `{botName}` 会被替换为机器人群名片或昵称
 - `{groupName}` 会被替换为群名称
-- `{botCardName}` 会被替换为机器人群名片或昵称
-- `{botNickName}` 会被替换为机器人昵称
 - 更多欢迎 ISSUE 或者 PR 补充...
 
 ## 配置文件

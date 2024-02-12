@@ -182,17 +182,13 @@ object JNudgeReply : KotlinPlugin(
             } else if (it is PlainText) {
                 /**
                  * 占位符
-                 * - `{cardName}` 会被替换为群名片或昵称
-                 * - `{nickName}` 会被替换为用户昵称`
+                 * - `{name}` 会被替换为群名片或昵称
+                 * - `{botName}` 会被替换为机器人群名片或昵称
                  * - `{groupName}` 会被替换为群名称
-                 * - `{botCardName}` 会被替换为机器人群名片或昵称
-                 * - `{botNickName}` 会被替换为机器人昵称
                  */
                 val content = it.content
-                    .replace("{cardName}", event.from.nameCardOrNick)
-                    .replace("{nickName}", event.from.nick)
-                    .replace("{botCardName}", event.target.nameCardOrNick)
-                    .replace("{botNickName}", event.target.nick)
+                    .replace("{name}", event.from.nameCardOrNick)
+                    .replace("{botName}", event.target.nameCardOrNick)
                     .replace(
                         "{groupName}",
                         if (event.subject is Group) {
